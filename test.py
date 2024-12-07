@@ -1,66 +1,67 @@
-import requests
-from bs4 import BeautifulSoup
-import re
+from nba_api.stats.static import players
+from nba_api.stats.endpoints import playergamelog
+import pandas as pd
 
-def get_lineups():
-    '''Fetch NBA matchups and lineups from Rotowire and associate them with the correct teams.'''
-    abbr_to_team_name = {
-        "ATL": "Atlanta", "BOS": "Boston", "BKN": "Brooklyn", "CHA": "Charlotte", "CHI": "Chicago",
-        "CLE": "Cleveland", "DAL": "Dallas", "DEN": "Denver", "DET": "Detroit", "GSW": "Golden State",
-        "HOU": "Houston", "IND": "Indiana", "LAC": "LA Clippers", "LAL": "LA Lakers", "MEM": "Memphis",
-        "MIA": "Miami", "MIL": "Milwaukee", "MIN": "Minnesota", "NOP": "New Orleans", "NYK": "New York",
-        "OKC": "Okla City", "ORL": "Orlando", "PHI": "Philadelphia", "PHX": "Phoenix", "POR": "Portland",
-        "SAC": "Sacramento", "SAS": "San Antonio", "TOR": "Toronto", "UTA": "Utah", "WAS": "Washington"
-    }
+def get_player_id(player_name):
+    """
+    Fetch the player ID for a given player name using nba_api.
+    
+    Parameters:
+        player_name (str): Full name of the player (e.g., "LeBron James").
+    
+    Returns:
+        int: The player's ID if found, otherwise None.
+    """
+    player_dict = players.get_players()
+    for player in player_dict:
+        if player['full_name'].lower() == player_name.lower():
+            return player['id']
+    print(f"Player '{player_name}' not found.")
+    return None
 
-    url_teams_lineups = "https://www.rotowire.com/basketball/nba-lineups.php"
-    response = requests.get(url_teams_lineups)
-    soup = BeautifulSoup(response.content, 'html.parser')
-
-    lineups_data = {}
-
-    # Get all lineup boxes
-    lineups = soup.find_all('div', class_='lineup__box')
-
-    for lineup in lineups:
-        # Get the matchup text
-        matchup = lineup.find('div', class_='lineup__matchup')
-        
-
-        if matchup:
-            matchup_text = matchup.get_text(strip=True)
-            teams = re.findall(r'\b[A-Za-z0-9]+\b(?=\()', matchup_text)
-            # Initialize dictionary for teams in this matchup
-            for team in teams:
-                lineups_data[team] = {}
-                # Now, we need to extract the player names for both teams
-                if team == teams[0]:
-                    team_type = "is-visit"
-                elif team == teams[1]:
-                    team_type = "is-home"
-                lineup_list = lineup.find('ul', class_=f'lineup__list {team_type}')
-                if lineup_list:
-                    players = lineup_list.find_all('li', class_='lineup__player')
-                    team_players = []
-                    for player in players:
-                        name_tag = player.find('a')
-                        if name_tag:
-                            name = name_tag.get('title', name_tag.get_text(strip=True))
-                            team_players.append(name)
-                    lineups_data[team] = team_players[:5]
-                    print(team, lineups_data[team])   
-        else:
-            print(f"Warning: No Matchup Found For {teams}")   
-                    
-                
-    return lineups_data
-
+def get_player_game_log(player_id, season='2023-24', season_type='Regular Season'):
+    """
+    Fetch the game log for a player using their ID.
+    
+    Parameters:
+        player_id (int): The player's ID.
+        season (str): The NBA season in 'YYYY-YY' format.
+        season_type (str): Either 'Regular Season' or 'Playoffs'.
+    
+    Returns:
+        pd.DataFrame: The player's game log as a DataFrame.
+    """
+    game_log = playergamelog.PlayerGameLog(player_id=player_id, season=season, season_type_all_star=season_type)
+    game_log_data = game_log.get_data_frames()
+    
+    if game_log_data:
+        return game_log_data[0]  # The first DataFrame contains the game log
+    print(f"No game log data found for player ID {player_id} in the {season} season.")
+    return pd.DataFrame()
 
 def main():
-    lineups = get_lineups()
-    print(lineups)
+    player_name = input("Enter the player's full name: ")
     
-
+    # Step 1: Get the player's ID
+    player_id = get_player_id(player_name)
+    if player_id is None:
+        return
+    
+    # Step 2: Get the player's game log
+    season = input("Enter the season (e.g., '2023-24'): ")
+    season_type = input("Enter the season type ('Regular Season' or 'Playoffs'): ")
+    
+    game_log_df = get_player_game_log(player_id, season=season, season_type=season_type)
+    
+    # Step 3: Display or save the game log
+    if not game_log_df.empty:
+        print("\nGame Log:")
+        print(game_log_df.head())  # Display the first few rows
+        # Save to CSV if needed
+        game_log_df.to_csv(f"{player_name.replace(' ', '_')}_game_log_{season}.csv", index=False)
+        print(f"Game log saved as '{player_name.replace(' ', '_')}_game_log_{season}.csv'")
+    else:
+        print("No game log available.")
 
 if __name__ == "__main__":
     main()
