@@ -102,19 +102,17 @@ def fetch_lines():
                 starters = lineups[team]
                 
                 if player.upper() == starters[0].upper() or player.upper() == starters[1].upper():
-                    print(f'{player} is a guard')
                     player_pos.append('G')
                 elif player.upper() == starters[2].upper() or player.upper() == starters[3].upper():
-                    print(f'{player} is a forward')
                     player_pos.append('F')
                 elif player.upper() == starters[4].upper():
-                    print(f'{player} is a center')
                     player_pos.append('C')
                 else:
                     player_pos.append('None')
             df.insert(1,'POS',player_pos)
             df.drop(df[df.isin(["None"]).any(axis=1)].index, inplace=True)
-            
+            df['ACTUAL'] = 'TBD'
+
             # Add DataFrame to all_lines dictionary
             all_lines[stat] = df
         else:
