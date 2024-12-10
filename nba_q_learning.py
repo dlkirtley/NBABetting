@@ -112,6 +112,7 @@ def fetch_lines():
             df.insert(1,'POS',player_pos)
             df.drop(df[df.isin(["None"]).any(axis=1)].index, inplace=True)
             df['ACTUAL'] = 'TBD'
+            
 
             # Add DataFrame to all_lines dictionary
             all_lines[stat] = df
@@ -166,7 +167,15 @@ def get_lineups():
 
 
 
-
+'''
+url1 = f"https://www.teamrankings.com/nba/stat/opponent-points-per-game?date={date[2]}-{date[0]}-{date[1]}"
+            url2 = f"https://www.teamrankings.com/nba/stat/defensive-efficiency?date={date[2]}-{date[0]}-{date[1]}"
+            url3 = f"https://www.teamrankings.com/nba/stat/opponent-floor-percentage?date={date[2]}-{date[0]}-{date[1]}"
+            url4 = f"https://www.teamrankings.com/nba/stat/opponent-fastbreak-points-per-game?date={date[2]}-{date[0]}-{date[1]}"
+            url5 = f"https://www.teamrankings.com/nba/stat/opponent-fastbreak-efficiency?date={date[2]}-{date[0]}-{date[1]}"
+            url6 = f"https://www.teamrankings.com/nba/stat/opponent-points-from-2-pointers?date={date[2]}-{date[0]}-{date[1]}"
+            url7 = f"https://www.teamrankings.com/nba/stat/opponent-points-from-3-pointers?date={date[2]}-{date[0]}-{date[1]}"
+'''
 
               
 
